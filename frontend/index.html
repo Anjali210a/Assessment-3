@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Task Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+  <h1>Task Management</h1>
+  <input type="text" id="taskTitle" placeholder="Task Title" />
+  <button onclick="createTask()">Create Task</button>
+  <ul id="taskList"></ul>
+
+  <script>
+    const socket = new SockJS("/ws");
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function () {
+      stompClient.subscribe("/topic/tasks", function (message) {
+        const task = JSON.parse(message.body);
+        const item = document.createElement("li");
+        item.textContent = task.title + " (" + task.status + ")";
+        document.getElementById("taskList").appendChild(item);
+      });
+    });
+
+    function createTask() {
+      const title = document.getElementById("taskTitle").value;
+      fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title, status: "Pending" })
+      });
+    }
+  </script>
+</body>
+</html>
